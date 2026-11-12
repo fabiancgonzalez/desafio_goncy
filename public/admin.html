@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi taller · Panel</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="admin">
+  <div class="contenedor">
+    <h1 style="margin-bottom:20px;">Hola, tia de Goncy 👋</h1>
+    <p style="margin-bottom:20px;" id="contador"></p>
+
+    <button class="boton-grande boton-verde" onclick="abrirModalAgregar()">
+      + Agregar pieza nueva
+    </button>
+
+    <div id="lista"></div>
+  </div>
+
+  <!-- Modal Agregar -->
+  <div class="modal-fondo" id="modal-agregar">
+    <div class="modal">
+      <h2>Nueva pieza</h2>
+      <label>Foto</label>
+      <input type="file" accept="image/*" capture="environment" id="input-foto">
+      <label>¿Cómo se llama?</label>
+      <input type="text" id="input-titulo" placeholder="Ej: Taza hoja verde">
+      <label>¿Cuánto sale?</label>
+      <input type="text" id="input-precio" placeholder="Ej: 4500" inputmode="numeric">
+      <label>¿Querés contar algo? (opcional)</label>
+      <textarea id="input-frase" rows="2" placeholder="Ej: La pinté pensando en el patio"></textarea>
+      <div class="botonera">
+        <button class="boton-cancelar" onclick="cerrarModales()">Cancelar</button>
+        <button class="boton-guardar" onclick="guardarNueva()">Guardar y publicar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Editar (nombre, precio y frase juntos) -->
+  <div class="modal-fondo" id="modal-editar">
+    <div class="modal">
+      <h2 id="editar-titulo">Editar pieza</h2>
+      
+      <label>Nombre</label>
+      <input type="text" id="input-editar-nombre">
+      
+      <label>Precio</label>
+      <input type="text" id="input-editar-precio" inputmode="numeric">
+      
+      <label>Frase (opcional)</label>
+      <textarea id="input-editar-frase" rows="2"></textarea>
+      
+      <div class="botonera">
+        <button class="boton-cancelar" onclick="cerrarModales()">Cancelar</button>
+        <button class="boton-guardar" onclick="guardarEdicion()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Foto -->
+  <div class="modal-fondo" id="modal-foto">
+    <div class="modal">
+      <h2 id="foto-titulo">Cambiar foto</h2>
+      <input type="file" accept="image/*" capture="environment" id="input-nueva-foto">
+      <div class="botonera">
+        <button class="boton-cancelar" onclick="cerrarModales()">Cancelar</button>
+        <button class="boton-guardar" onclick="guardarFoto()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js?v=2"></script>
+</body>
+</html>

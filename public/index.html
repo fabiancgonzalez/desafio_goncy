@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>El taller de tia de Goncy · Cerámica</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="encabezado">
+    <h1>El taller de tia de Goncy</h1>
+    <p>Cerámica hecha a mano, con tiempo y con ganas.</p>
+  </header>
+
+  <main class="contenedor">
+    <div class="grilla" id="grilla"></div>
+  </main>
+
+  <script>
+    const WSP = "5493513729188"; // ⚠️ Reemplazar por el número real de la tía (con código de país, sin +)
+
+    async function cargarProductos() {
+      const res = await fetch('/api/productos');
+      const productos = await res.json();
+      const grilla = document.getElementById('grilla');
+
+      if (productos.length === 0) {
+        grilla.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#777;">Pronto habrá piezas nuevas.</p>';
+        return;
+      }
+
+      grilla.innerHTML = productos.map(p => `
+        <article class="tarjeta">
+          <img src="${p.foto ? '/uploads/' + p.foto : 'https://placehold.co/400x300?text=Sin+foto'}" alt="${p.titulo}">
+          <div class="info">
+            <h3>${p.titulo}</h3>
+            <div class="precio">$${p.precio}</div>
+            ${p.frase ? `<div class="frase">"${p.frase}"</div>` : ''}
+            <a class="boton-wsp" href="https://wa.me/${WSP}?text=${encodeURIComponent('Hola tia de Goncy, me interesa ' + p.titulo)}" target="_blank">
+              Me interesa
+            </a>
+          </div>
+        </article>
+      `).join('');
+    }
+
+    cargarProductos();
+  </script>
+</body>
+</html>
