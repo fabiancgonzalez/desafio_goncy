@@ -36,7 +36,7 @@
             <h3>${p.titulo}</h3>
             <div class="precio">$${p.precio}</div>
             ${p.frase ? `<div class="frase">"${p.frase}"</div>` : ''}
-            <a class="boton-wsp" href="https://wa.me/${WSP}?text=${encodeURIComponent('Hola tia de Goncy, me interesa ' + p.titulo)}" target="_blank">
+            <a class="boton-wsp" href="https://wa.me/${WSP}?text=${encodeURIComponent('Hola tia de Goncy, me interesaria: ' + ' **' + p.titulo + ' por $' + p.precio + ' ** UNIDADES: ')}" target="_blank">
               Me interesa
             </a>
           </div>
