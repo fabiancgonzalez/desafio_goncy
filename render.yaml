@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: taller-tia-goncy
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: BASE_URL
+        value: https://desafio-goncy.onrender.com
+    disk:
+      name: datos
+      mountPath: /var/data
+      sizeGB: 1
