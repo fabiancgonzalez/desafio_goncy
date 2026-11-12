@@ -111,6 +111,8 @@ const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const { initDB, queryAll, runSql } = require('./database');
+const { obtenerToken, requiereAuth } = require('./auth');
+const QRCode = require('qrcode');
 
 const app = express();
 const PORT = 3000;
@@ -125,6 +127,8 @@ app.use('/uploads', express.static('uploads'));
 // Configuración de subida de fotos (en memoria, para comprimir con sharp)
 const upload = multer({ storage: multer.memoryStorage() });
 
+
+
 // ============ API PÚBLICA ============
 // Obtener todos los productos visibles (para la web pública)
 app.get('/api/productos', (req, res) => {
@@ -134,9 +138,41 @@ app.get('/api/productos', (req, res) => {
   res.json(productos);
 });
 
+// ============ AUTENTICACIÓN ============
+
+// Devuelve un QR con el link mágico (solo se usa una vez, desde tu compu)
+app.get('/api/auth/qr', async (req, res) => {
+  const token = obtenerToken();
+  // Cambiá esto por tu dominio real en producción
+  const baseUrl = process.env.BASE_URL || `http://localhost:${PORT}`;
+  const linkMagico = `${baseUrl}/admin.html?llave=${token}`;
+
+  try {
+    const qrDataUrl = await QRCode.toDataURL(linkMagico, {
+      width: 400,
+      margin: 2,
+      color: { dark: '#3d5a40', light: '#fdf8f0' }
+    });
+    res.json({ link: linkMagico, qr: qrDataUrl });
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudo generar el QR' });
+  }
+});
+
+// Valida un token (lo usa el panel al cargar)
+app.get('/api/auth/validar', (req, res) => {
+  const tokenValido = obtenerToken();
+  const tokenRecibido = req.query.llave;
+  if (tokenRecibido && tokenRecibido === tokenValido) {
+    return res.json({ ok: true });
+  }
+  res.status(401).json({ ok: false });
+});
+
+
 // ============ API ADMIN ============
 // Obtener TODOS los productos (para el panel de la tía)
-app.get('/api/admin/productos', (req, res) => {
+app.get('/api/admin/productos', requiereAuth, (req, res) => {
   const productos = queryAll(
     "SELECT * FROM productos ORDER BY creado DESC"
   );
@@ -144,7 +180,7 @@ app.get('/api/admin/productos', (req, res) => {
 });
 
 // Agregar producto
-app.post('/api/productos', upload.single('foto'), async (req, res) => {
+app.post('/api/productos',requiereAuth, upload.single('foto'), async (req, res) => {
   try {
     const { titulo, precio, frase } = req.body;
     let fotoNombre = null;
@@ -171,7 +207,7 @@ app.post('/api/productos', upload.single('foto'), async (req, res) => {
 });
 
 // Editar título, precio y frase
-app.put('/api/productos/:id/editar', (req, res) => {
+app.put('/api/productos/:id/editar', requiereAuth, (req, res) => {
   runSql(
     "UPDATE productos SET titulo = ?, precio = ?, frase = ? WHERE id = ?",
     [req.body.titulo, req.body.precio, req.body.frase, req.params.id]
@@ -180,7 +216,7 @@ app.put('/api/productos/:id/editar', (req, res) => {
 });
 
 // Cambiar precio
-app.put('/api/productos/:id/precio', (req, res) => {
+app.put('/api/productos/:id/precio', requiereAuth, (req, res) => {
   runSql(
     "UPDATE productos SET precio = ? WHERE id = ?",
     [req.body.precio, req.params.id]
@@ -189,7 +225,7 @@ app.put('/api/productos/:id/precio', (req, res) => {
 });
 
 // Cambiar foto
-app.put('/api/productos/:id/foto', upload.single('foto'), async (req, res) => {
+app.put('/api/productos/:id/foto', requiereAuth, upload.single('foto'), async (req, res) => {
   try {
     const fotoNombre = `pieza-${Date.now()}.jpg`;
     await sharp(req.file.buffer)
@@ -210,7 +246,7 @@ app.put('/api/productos/:id/foto', upload.single('foto'), async (req, res) => {
 });
 
 // Pausar / Reanudar producto
-app.put('/api/productos/:id/estado', (req, res) => {
+app.put('/api/productos/:id/estado', requiereAuth, (req, res) => {
   runSql(
     "UPDATE productos SET estado = ? WHERE id = ?",
     [req.body.estado, req.params.id]
@@ -219,7 +255,7 @@ app.put('/api/productos/:id/estado', (req, res) => {
 });
 
 // Eliminar producto (por si acaso)
-app.delete('/api/productos/:id', (req, res) => {
+app.delete('/api/productos/:id', requiereAuth, (req, res) => {
   runSql("DELETE FROM productos WHERE id = ?", [req.params.id]);
   res.json({ ok: true });
 });

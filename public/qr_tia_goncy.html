@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR de acceso · Taller de Norma</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { text-align: center; padding: 40px 20px; }
+    .qr-caja {
+      background: #fff;
+      display: inline-block;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin: 20px 0;
+    }
+    .qr-caja img { width: 320px; height: 320px; display: block; }
+    .link-texto {
+      word-break: break-all;
+      background: #f0ebe2;
+      padding: 14px;
+      border-radius: 8px;
+      font-size: 0.85em;
+      max-width: 500px;
+      margin: 20px auto;
+      font-family: monospace;
+    }
+    .aviso {
+      background: #fff3cd;
+      border-left: 4px solid #f0ad4e;
+      padding: 16px;
+      max-width: 500px;
+      margin: 20px auto;
+      text-align: left;
+      border-radius: 8px;
+      font-size: 0.95em;
+    }
+    button {
+      padding: 14px 28px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      background: #3d5a40;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: bold;
+      margin: 6px;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { padding: 0; }
+      .qr-caja { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Acceso al panel de Norma</h1>
+  <p style="color:#6b6b6b;">Escaneá este código con el celu de la tía (o mandale el link por WhatsApp).</p>
+
+  <div class="qr-caja">
+    <img id="qr-img" src="" alt="QR de acceso">
+  </div>
+
+  <div class="link-texto" id="link-texto">Generando link…</div>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Imprimir</button>
+    <button onclick="copiarLink()">📋 Copiar link</button>
+    <button onclick="abrirLink()">➡️ Abrir el panel</button>
+  </div>
+
+  <div class="aviso no-print">
+    <strong>⚠️ Importante:</strong> este link es la llave del panel. No lo compartas con nadie más que con la tía (o alguien de confianza). Si se filtra, borrá el archivo <code>token-secreto.txt</code> del servidor y volvé a generar uno nuevo desde acá.
+  </div>
+
+  <script>
+    let linkActual = '';
+
+    fetch('/api/auth/qr')
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById('qr-img').src = data.qr;
+        document.getElementById('link-texto').textContent = data.link;
+        linkActual = data.link;
+      })
+      .catch(() => {
+        document.getElementById('link-texto').textContent =
+          'Error: no se pudo generar el QR. ¿Está corriendo el servidor?';
+      });
+
+    function copiarLink() {
+      navigator.clipboard.writeText(linkActual).then(() => {
+        alert('Link copiado. Pegalo en WhatsApp para mandárselo a la tía.');
+      });
+    }
+
+    function abrirLink() {
+      if (linkActual) window.open(linkActual, '_blank');
+    }
+  </script>
+</body>
+</html>

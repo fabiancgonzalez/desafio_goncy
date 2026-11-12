@@ -7,7 +7,22 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="admin">
-  <div class="contenedor">
+         <script>
+    // Capturar la llave del link mágico
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const llaveUrl = params.get('llave');
+      if (llaveUrl) {
+        localStorage.setItem('llave_tia', llaveUrl);
+        // Limpiamos la URL para que no quede la llave a la vista
+        window.history.replaceState({}, '', '/admin.html');
+      }
+    })();
+  </script>
+
+
+  <div class="contenedor" id="panel" style="display:none;">
+    
     <h1 style="margin-bottom:20px;">Hola, tia de Goncy 👋</h1>
     <p style="margin-bottom:20px;" id="contador"></p>
 
@@ -16,6 +31,12 @@
     </button>
 
     <div id="lista"></div>
+  </div>
+
+    <div id="acceso-denegado" style="display:none; text-align:center; padding:60px 20px;">
+    <h1>🔒</h1>
+    <h2>Este panel es privado</h2>
+    <p style="margin-top:16px;">Pedile a la persona que armó la página que te comparta el link de acceso.</p>
   </div>
 
   <!-- Modal Agregar -->

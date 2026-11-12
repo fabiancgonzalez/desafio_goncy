@@ -1,9 +1,64 @@
 let productoActual = null;
 let productosCache = [];
 
+function getLlave() {
+  return localStorage.getItem('llave_tia') || '';
+}
+
+// Helper para fetch con la llave incluida
+async function apiFetch(url, opciones = {}) {
+  const llave = getLlave();
+  const headers = opciones.headers || {};
+  headers['x-llave'] = llave;
+
+  const res = await fetch(url, { ...opciones, headers });
+
+  if (res.status === 401) {
+    // Token inválido o vencido: mostrar pantalla de acceso denegado
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('acceso-denegado').style.display = 'block';
+    throw new Error('No autorizado');
+  }
+
+  return res;
+}
+
 async function cargarProductos() {
-  const res = await fetch('/api/admin/productos');
+  const llave = getLlave();
+
+// Sin llave: no hay panel
+  if (!llave) {
+    document.getElementById('panel').style.display = 'none';
+    document.getElementById('acceso-denegado').style.display = 'block';
+    return;
+  }
+
+  // Validar la llave contra el server
+  try {
+    const check = await fetch(`/api/auth/validar?llave=${encodeURIComponent(llave)}`);
+    if (!check.ok) {
+      localStorage.removeItem('llave_tia');
+      document.getElementById('panel').style.display = 'none';
+      document.getElementById('acceso-denegado').style.display = 'block';
+      return;
+    }
+  } catch (e) {
+    // Si falla la red, mostramos igual el panel (por si está offline momentáneamente)
+  }
+
+  // Llave válida: mostrar el panel y cargar productos
+  document.getElementById('panel').style.display = 'block';
+  document.getElementById('acceso-denegado').style.display = 'none';
+
+  const res = await apiFetch('/api/admin/productos');
   productosCache = await res.json();
+
+  // const res = await apiFetch('/api/admin/productos', {
+  //   headers: {
+  //     'x-llave': llave
+  //   }
+  // });
+  // productosCache = await res.json();
 
   const visibles = productosCache.filter(p => p.estado === 'visible').length;
   document.getElementById('contador').textContent =
@@ -59,7 +114,7 @@ async function guardarNueva() {
   fd.append('frase', frase);
   if (foto) fd.append('foto', foto);
 
-  await fetch('/api/productos', { method: 'POST', body: fd });
+  await apiFetch('/api/productos', { method: 'POST', body: fd });
   cerrarModales();
   cargarProductos();
 }
@@ -90,7 +145,7 @@ async function guardarEdicion() {
     return;
   }
 
-  await fetch(`/api/productos/${productoActual.id}/editar`, {
+  await apiFetch(`/api/productos/${productoActual.id}/editar`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -120,7 +175,7 @@ async function guardarFoto() {
   }
   const fd = new FormData();
   fd.append('foto', foto);
-  await fetch(`/api/productos/${productoActual.id}/foto`, { method: 'PUT', body: fd });
+  await apiFetch(`/api/productos/${productoActual.id}/foto`, { method: 'PUT', body: fd });
   cerrarModales();
   cargarProductos();
 }
@@ -128,7 +183,7 @@ async function guardarFoto() {
 // --- Pausar / Reactivar ---
 async function toggleEstado(id, estadoActual) {
   const nuevo = estadoActual === 'pausado' ? 'visible' : 'pausado';
-  await fetch(`/api/productos/${id}/estado`, {
+  await apiFetch(`/api/productos/${id}/estado`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ estado: nuevo })
