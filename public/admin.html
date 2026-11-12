@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mi taller · Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,400..600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="admin">
@@ -23,8 +26,8 @@
 
   <div class="contenedor" id="panel" style="display:none;">
     
-    <h1 style="margin-bottom:20px;">Hola, tia de Goncy 👋</h1>
-    <p style="margin-bottom:20px;" id="contador"></p>
+    <h1 class="saludo">Hola, tia de Goncy 👋</h1>
+    <p id="contador"></p>
 
     <button class="boton-grande boton-verde" onclick="abrirModalAgregar()">
       + Agregar pieza nueva
@@ -33,10 +36,10 @@
     <div id="lista"></div>
   </div>
 
-    <div id="acceso-denegado" style="display:none; text-align:center; padding:60px 20px;">
+    <div id="acceso-denegado" class="bloqueo" style="display:none;">
     <h1>🔒</h1>
     <h2>Este panel es privado</h2>
-    <p style="margin-top:16px;">Pedile a la persona que armó la página que te comparta el link de acceso.</p>
+    <p>Pedile a la persona que armó la página que te comparta el link de acceso.</p>
   </div>
 
   <!-- Modal Agregar -->

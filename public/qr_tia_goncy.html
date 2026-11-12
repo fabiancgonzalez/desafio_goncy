@@ -4,60 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QR de acceso · Taller de Norma</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500..700;1,9..144,400..600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
-  <style>
-    body { text-align: center; padding: 40px 20px; }
-    .qr-caja {
-      background: #fff;
-      display: inline-block;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-      margin: 20px 0;
-    }
-    .qr-caja img { width: 320px; height: 320px; display: block; }
-    .link-texto {
-      word-break: break-all;
-      background: #f0ebe2;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 0.85em;
-      max-width: 500px;
-      margin: 20px auto;
-      font-family: monospace;
-    }
-    .aviso {
-      background: #fff3cd;
-      border-left: 4px solid #f0ad4e;
-      padding: 16px;
-      max-width: 500px;
-      margin: 20px auto;
-      text-align: left;
-      border-radius: 8px;
-      font-size: 0.95em;
-    }
-    button {
-      padding: 14px 28px;
-      font-size: 1.1em;
-      border: none;
-      border-radius: 10px;
-      background: #3d5a40;
-      color: #fff;
-      cursor: pointer;
-      font-family: inherit;
-      font-weight: bold;
-      margin: 6px;
-    }
-    @media print {
-      .no-print { display: none !important; }
-      body { padding: 0; }
-      .qr-caja { box-shadow: none; }
-    }
-  </style>
 </head>
-<body>
+<body class="pagina-qr">
   <h1>Acceso al panel de Norma</h1>
-  <p style="color:#6b6b6b;">Escaneá este código con el celu de la tía (o mandale el link por WhatsApp).</p>
+  <p class="qr-subtitulo">Escaneá este código con el celu de la tía (o mandale el link por WhatsApp).</p>
 
   <div class="qr-caja">
     <img id="qr-img" src="" alt="QR de acceso">
@@ -65,7 +19,7 @@
 
   <div class="link-texto" id="link-texto">Generando link…</div>
 
-  <div class="no-print">
+  <div class="qr-acciones no-print">
     <button onclick="window.print()">🖨️ Imprimir</button>
     <button onclick="copiarLink()">📋 Copiar link</button>
     <button onclick="abrirLink()">➡️ Abrir el panel</button>
