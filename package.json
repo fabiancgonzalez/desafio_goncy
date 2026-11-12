@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+     "postinstall": "node -e \"if(process.platform==='linux' && process.env.RENDER==='true'){const{execSync}=require('child_process');try{console.log('Render Linux detectado: Reinstalando sharp...');execSync('npm uninstall sharp && npm install sharp',{stdio:'inherit',cwd:__dirname})}catch(e){console.error('Falló la reinstalación de sharp:',e)}}\""
   },
   "dependencies": {
     "express": "^4.18.2",
