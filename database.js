@@ -47,7 +47,13 @@ async function initDB() {
       creado DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  
+
+  // Migración: columna para registrar cuándo se vendió una pieza
+  const columnas = queryAll("PRAGMA table_info(productos)");
+  if (!columnas.some(c => c.name === 'vendido_en')) {
+    db.run("ALTER TABLE productos ADD COLUMN vendido_en DATETIME");
+  }
+
   guardarDB();
 }
 

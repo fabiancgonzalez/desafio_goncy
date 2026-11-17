@@ -8,6 +8,8 @@ services:
     envVars:
       - key: BASE_URL
         value: https://desafio-goncy.onrender.com
+      - key: VERCEL_AI_GATEWAY_API_KEY
+        sync: false # configurar el valor en el dashboard de Render (Environment)
     disk:
       name: datos
       mountPath: /var/data

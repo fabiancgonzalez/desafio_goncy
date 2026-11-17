@@ -48,6 +48,10 @@
       <h2>Nueva pieza</h2>
       <label>Foto</label>
       <input type="file" accept="image/*" capture="environment" id="input-foto">
+      <button type="button" class="boton-ia" id="boton-analizar" style="display:none;" onclick="analizarFoto()">
+        ✨ Analizar foto con IA
+      </button>
+      <p class="ia-estado" id="ia-estado"></p>
       <label>¿Cómo se llama?</label>
       <input type="text" id="input-titulo" placeholder="Ej: Taza hoja verde">
       <label>¿Cuánto sale?</label>
@@ -91,6 +95,27 @@
         <button class="boton-cancelar" onclick="cerrarModales()">Cancelar</button>
         <button class="boton-guardar" onclick="guardarFoto()">Guardar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- Asistente de voz -->
+  <button class="boton-asistente" id="boton-asistente" onclick="toggleAsistente()" title="Asistente de voz">🎤</button>
+
+  <div class="asistente-panel" id="asistente-panel">
+    <div class="asistente-cabecera">
+      <h2>Asistente 🎙️</h2>
+      <button class="asistente-cerrar" onclick="toggleAsistente()" aria-label="Cerrar">✕</button>
+    </div>
+    <p class="asistente-ayuda">
+      Hablame o escribime. Por ejemplo: <em>"analicemos una foto"</em> (usá el botón ✨ al agregar una pieza),
+      <em>"pausá la taza verde"</em>, <em>"marcá como vendido el florero"</em> o
+      <em>"¿cuánto vendí esta semana?"</em>
+    </p>
+    <div class="asistente-log" id="asistente-log"></div>
+    <div class="asistente-entrada">
+      <input type="text" id="asistente-texto" placeholder="Escribí o tocá el micrófono…" autocomplete="off">
+      <button class="asistente-mic" id="asistente-mic" onclick="toggleMicrofono()" title="Hablar">🎤</button>
+      <button class="asistente-enviar" onclick="enviarTexto()" title="Enviar">➤</button>
     </div>
   </div>
 

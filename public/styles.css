@@ -304,6 +304,7 @@ button { font: inherit; }
 
 .acciones button.pausar { background: #f7e7c8; border-color: #ecd9b0; }
 .acciones button.reactivar { background: #d9ecd9; border-color: #c2dfc2; }
+.acciones button.vendida { background: #dce9f5; border-color: #c3d9ec; }
 
 .pausado { opacity: .55; }
 
@@ -407,6 +408,169 @@ button { font: inherit; }
   background: linear-gradient(135deg, var(--verde), var(--verde-oscuro));
   color: #fff;
   box-shadow: 0 6px 14px rgb(61 90 64 / .25);
+}
+
+/* ===== Asistente IA ===== */
+.boton-ia {
+  display: block;
+  width: 100%;
+  margin: -0.5rem 0 1.1rem;
+  padding: .8rem 1rem;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  border-radius: var(--radio-chico);
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--terracota), #a34f2e);
+  color: #fff;
+  box-shadow: 0 6px 14px rgb(196 103 63 / .25);
+  transition: filter .2s ease, translate .2s ease;
+}
+
+.boton-ia:hover { filter: brightness(1.06); translate: 0 -1px; }
+.boton-ia:disabled { opacity: .6; cursor: wait; }
+
+.ia-estado {
+  font-size: .9rem;
+  color: var(--tinta-suave);
+  margin: -0.6rem 0 1.1rem;
+  min-height: 1.2em;
+}
+
+.boton-asistente {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.7rem;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--verde), var(--verde-oscuro));
+  box-shadow: var(--sombra-fuerte);
+  z-index: 110;
+  transition: translate .2s ease, filter .2s ease;
+}
+
+.boton-asistente:hover { translate: 0 -3px; filter: brightness(1.08); }
+
+.asistente-panel {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 6.25rem;
+  width: min(24rem, calc(100vw - 2.5rem));
+  max-height: min(32rem, calc(100dvh - 8.5rem));
+  background: var(--crema);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra-fuerte);
+  display: none;
+  flex-direction: column;
+  padding: 1.1rem;
+  z-index: 110;
+}
+
+.asistente-panel.activo {
+  display: flex;
+  animation: subir .28s cubic-bezier(.2, .9, .3, 1.15) both;
+}
+
+.asistente-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.asistente-cabecera h2 { font-size: 1.3rem; }
+
+.asistente-cerrar {
+  border: none;
+  background: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: var(--tinta-suave);
+  padding: .25rem .5rem;
+}
+
+.asistente-ayuda {
+  font-size: .85rem;
+  color: var(--tinta-suave);
+  margin: .6rem 0 .8rem;
+}
+
+.asistente-log {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  padding: .25rem;
+  min-height: 6rem;
+  margin-bottom: .75rem;
+}
+
+.mensaje {
+  padding: .6rem .9rem;
+  border-radius: var(--radio-chico);
+  font-size: .95rem;
+  max-width: 88%;
+  white-space: pre-wrap;
+}
+
+.mensaje.usuario {
+  align-self: flex-end;
+  background: var(--verde);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.mensaje.asistente {
+  align-self: flex-start;
+  background: var(--superficie);
+  border: 1px solid var(--linea);
+  border-bottom-left-radius: 4px;
+}
+
+.mensaje.pensando { opacity: .6; font-style: italic; }
+
+.asistente-entrada {
+  display: flex;
+  gap: .5rem;
+}
+
+.asistente-entrada input {
+  flex-grow: 1;
+  padding: .7rem .9rem;
+  font-size: 1rem;
+  border: 2px solid var(--linea);
+  border-radius: 999px;
+  font-family: inherit;
+  background: var(--superficie);
+}
+
+.asistente-entrada input:focus {
+  outline: none;
+  border-color: var(--verde);
+}
+
+.asistente-entrada button {
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: filter .2s ease;
+}
+
+.asistente-mic { background: var(--crema-profunda); border: 1px solid var(--linea); }
+.asistente-mic.escuchando { background: #f6d4d4; border-color: #e5a9a9; animation: pulso 1.2s ease infinite; }
+.asistente-enviar { background: var(--verde); color: #fff; }
+
+@keyframes pulso {
+  50% { scale: 1.08; }
 }
 
 /* ===== Página QR ===== */

@@ -1,0 +1,5 @@
+node_modules/
+.env
+token-secreto.txt
+taller.db
+uploads/

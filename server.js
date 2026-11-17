@@ -105,6 +105,7 @@ app.listen(PORT, () => {
 });
 */
 
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
@@ -112,6 +113,7 @@ const path = require('path');
 const fs = require('fs');
 const { initDB, queryAll, runSql } = require('./database');
 const { obtenerToken, requiereAuth } = require('./auth');
+const asistente = require('./asistente');
 const QRCode = require('qrcode');
 
 const app = express();
@@ -258,6 +260,48 @@ app.put('/api/productos/:id/estado', requiereAuth, (req, res) => {
 app.delete('/api/productos/:id', requiereAuth, (req, res) => {
   runSql("DELETE FROM productos WHERE id = ?", [req.params.id]);
   res.json({ ok: true });
+});
+
+// Marcar como vendido (registra la fecha para los reportes)
+app.put('/api/productos/:id/vendido', requiereAuth, (req, res) => {
+  runSql(
+    "UPDATE productos SET estado = 'vendido', vendido_en = CURRENT_TIMESTAMP, precio = COALESCE(?, precio) WHERE id = ?",
+    [req.body.precioFinal ?? null, req.params.id]
+  );
+  res.json({ ok: true });
+});
+
+// ============ ASISTENTE IA (Vercel AI SDK + AI Gateway) ============
+function middlewareAsistente(req, res, next) {
+  if (!asistente.asistenteDisponible) {
+    return res.status(503).json({ error: 'El asistente no está configurado: falta VERCEL_AI_GATEWAY_API_KEY en el servidor.' });
+  }
+  next();
+}
+
+// Analiza la foto de una pieza y sugiere nombre, precio y frase
+app.post('/api/asistente/foto', requiereAuth, middlewareAsistente, upload.single('foto'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'Falta la foto' });
+    const sugerencia = await asistente.analizarFoto(req.file.buffer, req.file.mimetype);
+    res.json(sugerencia);
+  } catch (err) {
+    console.error('Error analizando foto:', err);
+    res.status(500).json({ error: 'No se pudo analizar la foto' });
+  }
+});
+
+// Ejecuta un comando hablado/escrito sobre los productos
+app.post('/api/asistente/comando', requiereAuth, middlewareAsistente, async (req, res) => {
+  try {
+    const { texto } = req.body;
+    if (!texto || !texto.trim()) return res.status(400).json({ error: 'Falta el texto del comando' });
+    const respuesta = await asistente.ejecutarComando(texto.trim());
+    res.json(respuesta);
+  } catch (err) {
+    console.error('Error en comando del asistente:', err);
+    res.status(500).json({ error: 'El asistente no pudo procesar el pedido' });
+  }
 });
 
 // ============ ARRANQUE ============

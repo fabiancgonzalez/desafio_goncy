@@ -61,27 +61,53 @@ async function cargarProductos() {
   // productosCache = await res.json();
 
   const visibles = productosCache.filter(p => p.estado === 'visible').length;
+  const vendidas = productosCache.filter(p => p.estado === 'vendido').length;
   document.getElementById('contador').textContent =
-    `Tus piezas en la web hoy: ${visibles} visibles.`;
+    `Tus piezas en la web hoy: ${visibles} visibles · ${vendidas} vendidas.`;
 
   document.getElementById('lista').innerHTML = productosCache.map(p => `
-    <div class="fila-admin ${p.estado === 'pausado' ? 'pausado' : ''}">
+    <div class="fila-admin ${p.estado !== 'visible' ? 'pausado' : ''}">
       <img src="${p.foto ? '/uploads/' + p.foto : 'https://placehold.co/90'}" alt="">
       <div class="datos">
         <h3>${p.titulo}</h3>
         <div class="precio">$${p.precio}</div>
         ${p.estado === 'pausado' ? '<small>⏸ Pausada</small>' : ''}
+        ${p.estado === 'vendido' ? '<small>💰 Vendida' + (p.vendido_en ? ` el ${new Date(p.vendido_en + 'Z').toLocaleDateString('es-AR')}` : '') + '</small>' : ''}
       </div>
       <div class="acciones">
         <button onclick="abrirModalEditar(${p.id})">✏️ Editar</button>
         <button onclick="abrirModalFoto(${p.id})">📷 Cambiar foto</button>
-        <button class="${p.estado === 'pausado' ? 'reactivar' : 'pausar'}"
-          onclick="toggleEstado(${p.id}, '${p.estado}')">
-          ${p.estado === 'pausado' ? '▶ Reactivar' : '⏸ Pausar'}
-        </button>
+        ${p.estado !== 'vendido' ? `
+          <button class="${p.estado === 'pausado' ? 'reactivar' : 'pausar'}"
+            onclick="toggleEstado(${p.id}, '${p.estado}')">
+            ${p.estado === 'pausado' ? '▶ Reactivar' : '⏸ Pausar'}
+          </button>
+          <button class="vendida" onclick="marcarVendida(${p.id})">💰 Vendida</button>
+        ` : ''}
       </div>
     </div>
   `).join('');
+}
+
+// --- Marcar como vendida ---
+async function marcarVendida(id) {
+  const producto = productosCache.find(p => p.id === id);
+  if (!producto) return;
+
+  if (!confirm(`¿Marcar "${producto.titulo}" como vendida? Sale de la web y queda registrada para tus reportes.`)) {
+    return;
+  }
+
+  const entrada = prompt(`¿A cuánto la vendiste? (vacío = precio publicado: $${producto.precio})`);
+  if (entrada === null) return; // canceló
+  const precioFinal = entrada.trim() || null;
+
+  await apiFetch(`/api/productos/${id}/vendido`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ precioFinal })
+  });
+  cargarProductos();
 }
 
 function cerrarModales() {
@@ -94,7 +120,43 @@ function abrirModalAgregar() {
   document.getElementById('input-titulo').value = '';
   document.getElementById('input-precio').value = '';
   document.getElementById('input-frase').value = '';
+  document.getElementById('boton-analizar').style.display = 'none';
+  document.getElementById('ia-estado').textContent = '';
   document.getElementById('modal-agregar').classList.add('activo');
+}
+
+// --- Análisis de foto con IA ---
+document.getElementById('input-foto').addEventListener('change', (e) => {
+  document.getElementById('boton-analizar').style.display = e.target.files[0] ? 'block' : 'none';
+  document.getElementById('ia-estado').textContent = '';
+});
+
+async function analizarFoto() {
+  const foto = document.getElementById('input-foto').files[0];
+  if (!foto) return;
+
+  const boton = document.getElementById('boton-analizar');
+  const estado = document.getElementById('ia-estado');
+  boton.disabled = true;
+  estado.textContent = '🔎 La IA está mirando tu foto…';
+
+  try {
+    const fd = new FormData();
+    fd.append('foto', foto);
+    const res = await apiFetch('/api/asistente/foto', { method: 'POST', body: fd });
+    const datos = await res.json();
+    if (!res.ok) throw new Error(datos.error || 'Error del asistente');
+
+    document.getElementById('input-titulo').value = datos.titulo || '';
+    document.getElementById('input-precio').value = datos.precio ?? '';
+    document.getElementById('input-frase').value = datos.frase || '';
+    estado.textContent = `✨ Vi "${datos.objeto}" y te dejé todo sugerido. Podés cambiarlo antes de guardar.`;
+    hablar(`Vi ${datos.objeto}. Te sugerí llamarla ${datos.titulo} a ${datos.precio} pesos.`);
+  } catch (err) {
+    estado.textContent = `😕 ${err.message}`;
+  } finally {
+    boton.disabled = false;
+  }
 }
 
 async function guardarNueva() {
@@ -190,5 +252,114 @@ async function toggleEstado(id, estadoActual) {
   });
   cargarProductos();
 }
+
+// ============ ASISTENTE DE VOZ ============
+const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
+let reconocimiento = null;
+let escuchando = false;
+
+function toggleAsistente() {
+  document.getElementById('asistente-panel').classList.toggle('activo');
+}
+
+// Respuesta hablada (texto → voz del navegador)
+function hablar(texto) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const mensaje = new SpeechSynthesisUtterance(texto);
+  mensaje.lang = 'es-AR';
+  mensaje.rate = 1.05;
+  speechSynthesis.speak(mensaje);
+}
+
+function agregarAlLog(quien, texto) {
+  const log = document.getElementById('asistente-log');
+  const burbuja = document.createElement('div');
+  burbuja.className = `mensaje ${quien}`;
+  burbuja.textContent = texto;
+  log.appendChild(burbuja);
+  log.scrollTop = log.scrollHeight;
+}
+
+async function enviarComando(texto) {
+  const limpio = (texto || '').trim();
+  if (!limpio) return;
+
+  agregarAlLog('usuario', limpio);
+  const pensando = document.createElement('div');
+  pensando.className = 'mensaje asistente pensando';
+  pensando.textContent = 'Pensando…';
+  const log = document.getElementById('asistente-log');
+  log.appendChild(pensando);
+  log.scrollTop = log.scrollHeight;
+
+  try {
+    const res = await apiFetch('/api/asistente/comando', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto: limpio })
+    });
+    const datos = await res.json();
+    if (!res.ok) throw new Error(datos.error || 'Error del asistente');
+    pensando.textContent = datos.texto;
+    pensando.classList.remove('pensando');
+    hablar(datos.texto);
+    cargarProductos(); // refrescar por si el asistente modificó piezas
+  } catch (err) {
+    pensando.textContent = `😕 ${err.message}`;
+    pensando.classList.remove('pensando');
+  }
+}
+
+function enviarTexto() {
+  const input = document.getElementById('asistente-texto');
+  enviarComando(input.value);
+  input.value = '';
+}
+
+function toggleMicrofono() {
+  if (!Reconocimiento) {
+    agregarAlLog('asistente', 'Tu navegador no soporta reconocimiento de voz. Probá con Chrome o Edge.');
+    return;
+  }
+
+  if (escuchando) {
+    reconocimiento.stop();
+    return;
+  }
+
+  speechSynthesis.cancel(); // si estaba hablando, se calla para escuchar
+  reconocimiento = new Reconocimiento();
+  reconocimiento.lang = 'es-AR';
+  reconocimiento.interimResults = false;
+
+  const mic = document.getElementById('asistente-mic');
+  reconocimiento.onstart = () => {
+    escuchando = true;
+    mic.classList.add('escuchando');
+    mic.textContent = '🔴';
+  };
+  reconocimiento.onend = () => {
+    escuchando = false;
+    mic.classList.remove('escuchando');
+    mic.textContent = '🎤';
+  };
+  reconocimiento.onerror = () => {
+    escuchando = false;
+    mic.classList.remove('escuchando');
+    mic.textContent = '🎤';
+  };
+  reconocimiento.onresult = (e) => {
+    const texto = e.results[0][0].transcript;
+    enviarComando(texto);
+  };
+
+  reconocimiento.start();
+}
+
+// Enviar con Enter desde el input del asistente
+document.getElementById('asistente-texto').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') enviarTexto();
+});
 
 cargarProductos();
