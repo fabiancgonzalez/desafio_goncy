@@ -1,8 +1,6 @@
 const fs = require('fs');
-const path = require('path');
 const crypto = require('crypto');
-
-const TOKEN_FILE = path.join(__dirname, 'token-secreto.txt');
+const { TOKEN_FILE } = require('./paths');
 
 // Lee el token del archivo, o lo crea si no existe
 function obtenerToken() {

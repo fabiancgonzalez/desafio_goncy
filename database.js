@@ -21,9 +21,8 @@ module.exports = db;
 
 const initSqlJs = require('sql.js');
 const fs = require('fs');
-const path = require('path');
+const { DB_PATH } = require('./paths');
 
-const DB_PATH = 'taller.db';
 let db;
 
 async function initDB() {

@@ -110,21 +110,18 @@ const express = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
-const fs = require('fs');
 const { initDB, queryAll, runSql } = require('./database');
 const { obtenerToken, requiereAuth } = require('./auth');
 const asistente = require('./asistente');
+const { UPLOADS_DIR, DATA_DIR } = require('./paths');
 const QRCode = require('qrcode');
 
 const app = express();
 const PORT = 3000;
 
-// Asegurar carpeta de uploads
-if (!fs.existsSync('uploads')) fs.mkdirSync('uploads');
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static('public'));
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Configuración de subida de fotos (en memoria, para comprimir con sharp)
 const upload = multer({ storage: multer.memoryStorage() });
@@ -193,7 +190,7 @@ app.post('/api/productos',requiereAuth, upload.single('foto'), async (req, res) 
       await sharp(req.file.buffer)
         .resize({ width: 800, withoutEnlargement: true })
         .jpeg({ quality: 80 })
-        .toFile(path.join('uploads', fotoNombre));
+        .toFile(path.join(UPLOADS_DIR, fotoNombre));
     }
 
     const info = runSql(
@@ -233,7 +230,7 @@ app.put('/api/productos/:id/foto', requiereAuth, upload.single('foto'), async (r
     await sharp(req.file.buffer)
       .resize({ width: 800, withoutEnlargement: true })
       .jpeg({ quality: 80 })
-      .toFile(path.join('uploads', fotoNombre));
+      .toFile(path.join(UPLOADS_DIR, fotoNombre));
 
     runSql(
       "UPDATE productos SET foto = ? WHERE id = ?",
@@ -312,6 +309,7 @@ initDB()
       console.log(`🫖 Taller de la tía tia de Goncy corriendo en http://localhost:${PORT}`);
       console.log(`   Web pública: http://localhost:${PORT}`);
       console.log(`   Panel de tia de Goncy: http://localhost:${PORT}/admin.html`);
+      console.log(`   Datos persistentes en: ${DATA_DIR}`);
     });
   })
   .catch((err) => {

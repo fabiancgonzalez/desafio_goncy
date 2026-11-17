@@ -8,6 +8,8 @@ services:
     envVars:
       - key: BASE_URL
         value: https://desafio-goncy.onrender.com
+      - key: DATA_DIR
+        value: /var/data # disco persistente "datos" (DB, fotos y token sobreviven los redeploys)
       - key: VERCEL_AI_GATEWAY_API_KEY
         sync: false # configurar el valor en el dashboard de Render (Environment)
     disk:
