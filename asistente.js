@@ -157,4 +157,23 @@ async function ejecutarComando(texto) {
   return { texto: resultado.text };
 }
 
-module.exports = { asistenteDisponible, analizarFoto, ejecutarComando };
+// ============ CHAT PARA COMPRADORES (público, solo lectura) ============
+async function chatComprador(mensajes) {
+  const productos = queryAll("SELECT titulo, precio, frase, stock FROM productos WHERE estado = 'visible'");
+  const catalogo = productos
+    .map((p) => `- ${p.titulo}: $${p.precio}${p.stock ? ` (stock ${p.stock})` : ''}${p.frase ? ` — "${p.frase}"` : ''}`)
+    .join('\n') || '(sin piezas por el momento)';
+  const { generateText } = require('ai');
+  const { text } = await generateText({
+    model: gateway(MODELO),
+    system:
+      'Sos la asistente virtual de "El taller de tía de Goncy", una tienda de cerámica artesanal. ' +
+      'Respondé en español rioplatense, cálida y breve (máximo 3 oraciones, se lee en voz alta). ' +
+      'Ayudá a elegir piezas usando SOLO este catálogo; no inventes productos ni precios. ' +
+      'Para comprar, indicá que toquen "Me interesa" en la pieza para escribir por WhatsApp.\n\nCatálogo:\n' + catalogo,
+    messages: mensajes,
+  });
+  return { texto: text };
+}
+
+module.exports = { asistenteDisponible, analizarFoto, ejecutarComando, chatComprador };

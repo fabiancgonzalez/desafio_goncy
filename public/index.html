@@ -19,7 +19,90 @@
     <div class="grilla" id="grilla"></div>
   </main>
 
+  <div class="visor" id="visor" hidden>
+    <img id="visorImg" alt="">
+  </div>
+
+  <button class="chat-fab" id="chatFab" aria-label="Hablar con la asistente">💬</button>
+  <section class="chat" id="chat" hidden>
+    <div class="chat-cab">Asistente del taller <button id="chatCerrar" aria-label="Cerrar">✕</button></div>
+    <div class="chat-msgs" id="chatMsgs"></div>
+    <form class="chat-form" id="chatForm">
+      <button type="button" id="chatMic" aria-label="Hablar">🎤</button>
+      <input id="chatInput" placeholder="Escribí o hablá..." autocomplete="off">
+      <button type="submit">Enviar</button>
+    </form>
+  </section>
+
   <script>
+    // ---- Visor de imagen ----
+    const visor = document.getElementById('visor');
+    document.getElementById('grilla').addEventListener('click', (e) => {
+      if (e.target.tagName === 'IMG') {
+        document.getElementById('visorImg').src = e.target.src;
+        visor.hidden = false;
+      }
+    });
+    visor.addEventListener('click', () => (visor.hidden = true));
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') visor.hidden = true; });
+
+    // ---- Chat con micrófono ----
+    const chat = document.getElementById('chat'), msgs = document.getElementById('chatMsgs');
+    const input = document.getElementById('chatInput'), mic = document.getElementById('chatMic');
+    const historial = [];
+    function agregar(rol, texto) {
+      const d = document.createElement('div');
+      d.className = 'msg ' + rol;
+      d.textContent = texto;
+      msgs.appendChild(d);
+      msgs.scrollTop = msgs.scrollHeight;
+    }
+    function hablar(texto) {
+      if (!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      u.lang = 'es-AR';
+      speechSynthesis.speak(u);
+    }
+    async function enviar(texto, porVoz) {
+      agregar('user', texto);
+      historial.push({ role: 'user', content: texto });
+      agregar('bot', '…');
+      const espera = msgs.lastChild;
+      try {
+        const res = await fetch('/api/asistente/comprador', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mensajes: historial }),
+        });
+        const data = await res.json();
+        const r = data.texto || data.error || 'No pude responder.';
+        espera.textContent = r;
+        if (data.texto) historial.push({ role: 'assistant', content: r });
+        if (porVoz) hablar(r);
+      } catch { espera.textContent = 'Error de conexión.'; }
+    }
+    document.getElementById('chatFab').onclick = () => {
+      chat.hidden = false;
+      if (!msgs.children.length) agregar('bot', '¡Hola! Soy la asistente del taller. Preguntame por las piezas, tocá 🎤 para hablarme.');
+    };
+    document.getElementById('chatCerrar').onclick = () => { chat.hidden = true; speechSynthesis.cancel(); };
+    document.getElementById('chatForm').onsubmit = (e) => {
+      e.preventDefault();
+      const t = input.value.trim();
+      if (!t) return;
+      input.value = '';
+      enviar(t, false);
+    };
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { mic.hidden = true; } else {
+      const rec = new SR();
+      rec.lang = 'es-AR';
+      rec.onresult = (e) => enviar(e.results[0][0].transcript, true);
+      rec.onend = () => mic.classList.remove('grabando');
+      mic.onclick = () => { speechSynthesis.cancel(); mic.classList.add('grabando'); rec.start(); };
+    }
+
     const WSP = "5493513729188"; // ⚠️  el número real de la tía (con código de país, sin +)
 
     async function cargarProductos() {

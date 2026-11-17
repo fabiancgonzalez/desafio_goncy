@@ -274,6 +274,23 @@ function middlewareAsistente(req, res, next) {
   next();
 }
 
+// Chat público para compradores
+app.post('/api/asistente/comprador', middlewareAsistente, async (req, res) => {
+  try {
+    const mensajes = (Array.isArray(req.body.mensajes) ? req.body.mensajes : [])
+      .slice(-10)
+      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map((m) => ({ role: m.role, content: m.content.slice(0, 500) }));
+    if (!mensajes.length || mensajes[mensajes.length - 1].role !== 'user') {
+      return res.status(400).json({ error: 'Falta el mensaje' });
+    }
+    res.json(await asistente.chatComprador(mensajes));
+  } catch (err) {
+    console.error('Error en chat comprador:', err);
+    res.status(500).json({ error: 'No pude responder ahora' });
+  }
+});
+
 // Analiza la foto de una pieza y sugiere nombre, precio y frase
 app.post('/api/asistente/foto', requiereAuth, middlewareAsistente, upload.single('foto'), async (req, res) => {
   try {
