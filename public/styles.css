@@ -410,6 +410,49 @@ button { font: inherit; }
   box-shadow: 0 6px 14px rgb(61 90 64 / .25);
 }
 
+/* ===== Selector de foto personalizado ===== */
+.input-archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.boton-foto {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: .9rem 1rem;
+  margin-bottom: .4rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: center;
+  border: 2px dashed var(--linea);
+  border-radius: var(--radio-chico);
+  cursor: pointer;
+  background: var(--superficie);
+  color: var(--verde-oscuro);
+  transition: border-color .2s ease, background .2s ease;
+}
+
+.boton-foto:hover {
+  border-color: var(--verde);
+  background: #fff;
+}
+
+.nombre-archivo {
+  display: block;
+  font-size: .85rem;
+  color: var(--tinta-suave);
+  margin-bottom: 1.1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ===== Asistente IA ===== */
 .boton-ia {
   display: block;

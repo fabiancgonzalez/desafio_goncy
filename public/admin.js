@@ -122,13 +122,21 @@ function abrirModalAgregar() {
   document.getElementById('input-frase').value = '';
   document.getElementById('boton-analizar').style.display = 'none';
   document.getElementById('ia-estado').textContent = '';
+  document.getElementById('nombre-foto').textContent = '';
   document.getElementById('modal-agregar').classList.add('activo');
 }
 
 // --- Análisis de foto con IA ---
 document.getElementById('input-foto').addEventListener('change', (e) => {
-  document.getElementById('boton-analizar').style.display = e.target.files[0] ? 'block' : 'none';
+  const archivo = e.target.files[0];
+  document.getElementById('boton-analizar').style.display = archivo ? 'block' : 'none';
   document.getElementById('ia-estado').textContent = '';
+  document.getElementById('nombre-foto').textContent = archivo ? `📎 ${archivo.name}` : '';
+});
+
+document.getElementById('input-nueva-foto').addEventListener('change', (e) => {
+  const archivo = e.target.files[0];
+  document.getElementById('nombre-nueva-foto').textContent = archivo ? `📎 ${archivo.name}` : '';
 });
 
 async function analizarFoto() {
@@ -226,6 +234,7 @@ function abrirModalFoto(id) {
   productoActual = productosCache.find(p => p.id === id);
   document.getElementById('foto-titulo').textContent = `Foto de "${productoActual.titulo}"`;
   document.getElementById('input-nueva-foto').value = '';
+  document.getElementById('nombre-nueva-foto').textContent = '';
   document.getElementById('modal-foto').classList.add('activo');
 }
 

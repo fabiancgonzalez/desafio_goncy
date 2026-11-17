@@ -47,7 +47,9 @@
     <div class="modal">
       <h2>Nueva pieza</h2>
       <label>Foto</label>
-      <input type="file" accept="image/*" capture="environment" id="input-foto">
+      <label class="boton-foto" for="input-foto">📷 Sacar foto</label>
+      <input type="file" accept="image/*" capture="environment" id="input-foto" class="input-archivo">
+      <span class="nombre-archivo" id="nombre-foto"></span>
       <button type="button" class="boton-ia" id="boton-analizar" style="display:none;" onclick="analizarFoto()">
         ✨ Analizar foto con IA
       </button>
@@ -90,7 +92,9 @@
   <div class="modal-fondo" id="modal-foto">
     <div class="modal">
       <h2 id="foto-titulo">Cambiar foto</h2>
-      <input type="file" accept="image/*" capture="environment" id="input-nueva-foto">
+      <label class="boton-foto" for="input-nueva-foto">📷 Cambiar foto</label>
+      <input type="file" accept="image/*" capture="environment" id="input-nueva-foto" class="input-archivo">
+      <span class="nombre-archivo" id="nombre-nueva-foto"></span>
       <div class="botonera">
         <button class="boton-cancelar" onclick="cerrarModales()">Cancelar</button>
         <button class="boton-guardar" onclick="guardarFoto()">Guardar</button>
