@@ -53,6 +53,10 @@ async function initDB() {
   if (!columnas.some(c => c.name === 'vendido_en')) {
     db.run("ALTER TABLE productos ADD COLUMN vendido_en DATETIME");
   }
+  // Migración: cantidad de piezas disponibles
+  if (!columnas.some(c => c.name === 'stock')) {
+    db.run("ALTER TABLE productos ADD COLUMN stock INTEGER DEFAULT 1");
+  }
 
   guardarDB();
 }

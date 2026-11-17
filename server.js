@@ -184,7 +184,7 @@ app.get('/api/admin/productos', requiereAuth, (req, res) => {
 // Agregar producto
 app.post('/api/productos',requiereAuth, upload.single('foto'), async (req, res) => {
   try {
-    const { titulo, precio, frase } = req.body;
+    const { titulo, precio, frase, stock } = req.body;
     let fotoNombre = null;
 
     if (req.file) {
@@ -197,8 +197,8 @@ app.post('/api/productos',requiereAuth, upload.single('foto'), async (req, res) 
     }
 
     const info = runSql(
-      "INSERT INTO productos (titulo, precio, frase, foto) VALUES (?, ?, ?, ?)",
-      [titulo, precio, frase || '', fotoNombre]
+      "INSERT INTO productos (titulo, precio, frase, foto, stock) VALUES (?, ?, ?, ?, ?)",
+      [titulo, precio, frase || '', fotoNombre, Math.max(1, parseInt(stock) || 1)]
     );
 
     res.json({ ok: true, id: info.lastInsertRowid });
@@ -208,11 +208,11 @@ app.post('/api/productos',requiereAuth, upload.single('foto'), async (req, res) 
   }
 });
 
-// Editar título, precio y frase
+// Editar título, precio, frase y cantidad disponible
 app.put('/api/productos/:id/editar', requiereAuth, (req, res) => {
   runSql(
-    "UPDATE productos SET titulo = ?, precio = ?, frase = ? WHERE id = ?",
-    [req.body.titulo, req.body.precio, req.body.frase, req.params.id]
+    "UPDATE productos SET titulo = ?, precio = ?, frase = ?, stock = ? WHERE id = ?",
+    [req.body.titulo, req.body.precio, req.body.frase, Math.max(0, parseInt(req.body.stock) || 0), req.params.id]
   );
   res.json({ ok: true });
 });

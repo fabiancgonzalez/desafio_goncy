@@ -71,6 +71,7 @@ async function cargarProductos() {
       <div class="datos">
         <h3>${p.titulo}</h3>
         <div class="precio">$${p.precio}</div>
+        ${p.estado !== 'vendido' ? `<small>📦 ${(p.stock ?? 1) === 1 ? 'Queda 1' : `Quedan ${p.stock}`}</small>` : ''}
         ${p.estado === 'pausado' ? '<small>⏸ Pausada</small>' : ''}
         ${p.estado === 'vendido' ? '<small>💰 Vendida' + (p.vendido_en ? ` el ${new Date(p.vendido_en + 'Z').toLocaleDateString('es-AR')}` : '') + '</small>' : ''}
       </div>
@@ -119,6 +120,7 @@ function abrirModalAgregar() {
   document.getElementById('input-foto').value = '';
   document.getElementById('input-titulo').value = '';
   document.getElementById('input-precio').value = '';
+  document.getElementById('input-stock').value = '';
   document.getElementById('input-frase').value = '';
   document.getElementById('boton-analizar').style.display = 'none';
   document.getElementById('ia-estado').textContent = '';
@@ -182,6 +184,7 @@ async function guardarNueva() {
   fd.append('titulo', titulo);
   fd.append('precio', precio);
   fd.append('frase', frase);
+  fd.append('stock', document.getElementById('input-stock').value.trim() || '1');
   if (foto) fd.append('foto', foto);
 
   await apiFetch('/api/productos', { method: 'POST', body: fd });
@@ -200,6 +203,7 @@ function abrirModalEditar(id) {
   document.getElementById('editar-titulo').textContent = `Editar "${productoActual.titulo}"`;
   document.getElementById('input-editar-nombre').value = productoActual.titulo;
   document.getElementById('input-editar-precio').value = productoActual.precio;
+  document.getElementById('input-editar-stock').value = productoActual.stock ?? 1;
   document.getElementById('input-editar-frase').value = productoActual.frase || '';
 
   document.getElementById('modal-editar').classList.add('activo');
@@ -208,6 +212,7 @@ function abrirModalEditar(id) {
 async function guardarEdicion() {
   const nuevoNombre = document.getElementById('input-editar-nombre').value.trim();
   const nuevoPrecio = document.getElementById('input-editar-precio').value.trim();
+  const nuevoStock = parseInt(document.getElementById('input-editar-stock').value.trim()) || 0;
   const nuevaFrase = document.getElementById('input-editar-frase').value.trim();
 
   if (!nuevoNombre || !nuevoPrecio) {
@@ -221,6 +226,7 @@ async function guardarEdicion() {
     body: JSON.stringify({
       titulo: nuevoNombre,
       precio: nuevoPrecio,
+      stock: nuevoStock,
       frase: nuevaFrase
     })
   });

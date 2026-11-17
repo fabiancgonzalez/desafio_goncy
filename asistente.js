@@ -60,35 +60,36 @@ Reglas:
 - Confirmá siempre qué hiciste, con el nombre de la pieza (ej: "Listo, pausé la Taza hoja verde").`,
       tools: {
         listarProductos: tool({
-          description: 'Lista las piezas del taller con su id, nombre, precio y estado. Usalo siempre antes de editar, pausar, vender o dar de baja una pieza.',
+          description: 'Lista las piezas del taller con su id, nombre, precio, cantidad disponible (stock) y estado. Usalo siempre antes de editar, pausar, vender o dar de baja una pieza.',
           inputSchema: z.object({
             estado: z.enum(['visible', 'pausado', 'vendido', 'todos']).default('todos')
               .describe('Filtrar por estado, o "todos" para ver todo'),
           }),
           execute: async ({ estado }) => {
             const filas = estado === 'todos'
-              ? queryAll('SELECT id, titulo, precio, estado FROM productos ORDER BY creado DESC')
-              : queryAll('SELECT id, titulo, precio, estado FROM productos WHERE estado = ? ORDER BY creado DESC', [estado]);
+              ? queryAll('SELECT id, titulo, precio, stock, estado FROM productos ORDER BY creado DESC')
+              : queryAll('SELECT id, titulo, precio, stock, estado FROM productos WHERE estado = ? ORDER BY creado DESC', [estado]);
             return { productos: filas };
           },
         }),
 
         editarProducto: tool({
-          description: 'Edita el nombre, el precio y/o la frase de una pieza. Solo se modifican los campos que se pasen.',
+          description: 'Edita el nombre, el precio, la frase y/o la cantidad disponible (stock) de una pieza. Solo se modifican los campos que se pasen.',
           inputSchema: z.object({
             id: z.number().int().describe('Id de la pieza (obtenelo con listarProductos)'),
             titulo: z.string().optional().describe('Nuevo nombre'),
             precio: z.string().optional().describe('Nuevo precio, solo el número (ej: "4500")'),
             frase: z.string().optional().describe('Nueva frase'),
+            stock: z.number().int().min(0).optional().describe('Nueva cantidad de piezas disponibles'),
           }),
-          execute: async ({ id, titulo, precio, frase }) => {
+          execute: async ({ id, titulo, precio, frase, stock }) => {
             const actual = buscarProductoPorId(id);
             if (!actual) return { error: `No existe la pieza con id ${id}` };
             runSql(
-              'UPDATE productos SET titulo = ?, precio = ?, frase = ? WHERE id = ?',
-              [titulo ?? actual.titulo, precio ?? actual.precio, frase ?? actual.frase, id]
+              'UPDATE productos SET titulo = ?, precio = ?, frase = ?, stock = ? WHERE id = ?',
+              [titulo ?? actual.titulo, precio ?? actual.precio, frase ?? actual.frase, stock ?? actual.stock ?? 1, id]
             );
-            return { ok: true, titulo: titulo ?? actual.titulo };
+            return { ok: true, titulo: titulo ?? actual.titulo, stock: stock ?? actual.stock };
           },
         }),
 
