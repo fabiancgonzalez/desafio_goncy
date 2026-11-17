@@ -63,7 +63,7 @@ async function cargarProductos() {
   const visibles = productosCache.filter(p => p.estado === 'visible').length;
   const vendidas = productosCache.filter(p => p.estado === 'vendido').length;
   document.getElementById('contador').textContent =
-    `Tus piezas en la web hoy: ${visibles} visibles · ${vendidas} vendidas.`;
+    `Tus piezas en la web hoy: ${visibles} visibles · ${vendidas} agotadas/vendidas.`;
 
   document.getElementById('lista').innerHTML = productosCache.map(p => `
     <div class="fila-admin ${p.estado !== 'visible' ? 'pausado' : ''}">
@@ -73,29 +73,30 @@ async function cargarProductos() {
         <div class="precio">$${p.precio}</div>
         ${p.estado !== 'vendido' ? `<small>📦 ${(p.stock ?? 1) === 1 ? 'Queda 1' : `Quedan ${p.stock}`}</small>` : ''}
         ${p.estado === 'pausado' ? '<small>⏸ Pausada</small>' : ''}
-        ${p.estado === 'vendido' ? '<small>💰 Vendida' + (p.vendido_en ? ` el ${new Date(p.vendido_en + 'Z').toLocaleDateString('es-AR')}` : '') + '</small>' : ''}
+        ${p.estado === 'vendido' ? '<small>💰 Agotada' + (p.vendido_en ? ` — última venta el ${new Date(p.vendido_en + 'Z').toLocaleDateString('es-AR')}` : '') + '</small>' : ''}
       </div>
       <div class="acciones">
         <button onclick="abrirModalEditar(${p.id})">✏️ Editar</button>
         <button onclick="abrirModalFoto(${p.id})">📷 Cambiar foto</button>
+        <button class="${p.estado === 'visible' ? 'pausar' : 'reactivar'}"
+          onclick="toggleEstado(${p.id}, '${p.estado}')">
+          ${p.estado === 'visible' ? '⏸ Pausar' : '▶ Reactivar'}
+        </button>
         ${p.estado !== 'vendido' ? `
-          <button class="${p.estado === 'pausado' ? 'reactivar' : 'pausar'}"
-            onclick="toggleEstado(${p.id}, '${p.estado}')">
-            ${p.estado === 'pausado' ? '▶ Reactivar' : '⏸ Pausar'}
-          </button>
-          <button class="vendida" onclick="marcarVendida(${p.id})">💰 Vendida</button>
+          <button class="vendida" onclick="marcarVendida(${p.id})">💰 Vendí 1</button>
         ` : ''}
       </div>
     </div>
   `).join('');
 }
 
-// --- Marcar como vendida ---
+// --- Registrar venta de una unidad (descuenta stock) ---
 async function marcarVendida(id) {
   const producto = productosCache.find(p => p.id === id);
   if (!producto) return;
 
-  if (!confirm(`¿Marcar "${producto.titulo}" como vendida? Sale de la web y queda registrada para tus reportes.`)) {
+  const stockActual = producto.stock ?? 1;
+  if (!confirm(`¿Registrar la venta de 1 "${producto.titulo}"?\n\nQuedan ${stockActual}. Después de esta venta: ${stockActual - 1 === 0 ? 'se agota y sale de la web' : `quedan ${stockActual - 1}`}.`)) {
     return;
   }
 
@@ -103,11 +104,16 @@ async function marcarVendida(id) {
   if (entrada === null) return; // canceló
   const precioFinal = entrada.trim() || null;
 
-  await apiFetch(`/api/productos/${id}/vendido`, {
+  const res = await apiFetch(`/api/productos/${id}/vendido`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ precioFinal })
   });
+  const datos = await res.json();
+
+  if (datos.agotada) {
+    hablar(`Se agotó ${datos.producto.titulo}. Ya no se ve en la web.`);
+  }
   cargarProductos();
 }
 

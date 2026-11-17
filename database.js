@@ -57,7 +57,40 @@ async function initDB() {
     db.run("ALTER TABLE productos ADD COLUMN stock INTEGER DEFAULT 1");
   }
 
+  // Historial de ventas: una fila por cada unidad vendida
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ventas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      producto_id INTEGER,
+      titulo TEXT,
+      precio TEXT,
+      vendido_en DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
   guardarDB();
+}
+
+// Registra una venta (una unidad) y descuenta stock.
+// Si el stock llega a 0, la pieza pasa a estado 'vendido' (oculta de la web).
+function registrarVenta(id, precioFinal) {
+  const producto = queryOne('SELECT * FROM productos WHERE id = ?', [id]);
+  if (!producto) return null;
+
+  const stockActual = producto.stock ?? 1;
+  const nuevoStock = Math.max(0, stockActual - 1);
+  const nuevoEstado = nuevoStock === 0 ? 'vendido' : producto.estado;
+
+  runSql(
+    'UPDATE productos SET stock = ?, estado = ?, vendido_en = CURRENT_TIMESTAMP WHERE id = ?',
+    [nuevoStock, nuevoEstado, id]
+  );
+  runSql(
+    'INSERT INTO ventas (producto_id, titulo, precio) VALUES (?, ?, ?)',
+    [id, producto.titulo, precioFinal ?? producto.precio]
+  );
+
+  return { producto, stockRestante: nuevoStock, estado: nuevoEstado };
 }
 
 function guardarDB() {
@@ -86,4 +119,9 @@ function runSql(sql, params = []) {
   return { lastInsertRowid: result[0].id };
 }
 
-module.exports = { initDB, queryAll, runSql, db };
+// Helper para leer una sola fila
+function queryOne(sql, params = []) {
+  return queryAll(sql, params)[0] || null;
+}
+
+module.exports = { initDB, queryAll, queryOne, runSql, registrarVenta, db };

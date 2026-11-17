@@ -1,6 +1,6 @@
 const { createGateway, generateObject, ToolLoopAgent, tool, stepCountIs } = require('ai');
 const { z } = require('zod');
-const { queryAll, runSql } = require('./database');
+const { queryAll, queryOne, runSql, registrarVenta } = require('./database');
 
 // Vercel AI Gateway: una sola API key para acceder a los modelos.
 // En local se lee de .env (dotenv se carga en server.js); en Render, del panel de env vars.
@@ -40,7 +40,7 @@ async function analizarFoto(buffer, mediaType) {
 // ============ AGENTE DE COMANDOS ============
 // Interpreta lo que pide la tía (por voz o texto) y actúa sobre los productos.
 function buscarProductoPorId(id) {
-  return queryAll('SELECT * FROM productos WHERE id = ?', [id])[0];
+  return queryOne('SELECT * FROM productos WHERE id = ?', [id]);
 }
 
 const agente = asistenteDisponible
@@ -55,6 +55,7 @@ Reglas:
 - Si varias piezas coinciden con lo que describe, NO actúes: preguntale cuál de ellas (mencioná los nombres exactos).
 - Si ninguna pieza coincide, decíselo con amabilidad.
 - "Dar de baja" o "deshabilitar" significa cambiar el estado a 'pausado' (queda oculta de la web pero no se borra). Nunca borres piezas.
+- Si la tía se confunde al vender una pieza, podés reactivarla con cambiarEstado a 'visible' (aclarale que tendrá que corregir la cantidad disponible si hace falta).
 - Para reportes de ventas usá reporteVentas con el período que te pidan y contale el total y la lista de piezas vendidas.
 - Respondé siempre en español, corto, cálido y claro: la respuesta se lee en voz alta. No uses markdown ni listas con guiones; hablá en oraciones.
 - Confirmá siempre qué hiciste, con el nombre de la pieza (ej: "Listo, pausé la Taza hoja verde").`,
@@ -108,24 +109,25 @@ Reglas:
         }),
 
         marcarVendido: tool({
-          description: 'Marca una pieza como vendida (queda fuera de la web y registra la fecha de venta).',
+          description: 'Registra la venta de UNA unidad de una pieza: descuenta 1 de la cantidad disponible y guarda la venta en el historial. Si la cantidad llega a 0, la pieza se oculta de la web. Si te dicen "vendí 2", llamá a esta herramienta una vez por unidad.',
           inputSchema: z.object({
             id: z.number().int().describe('Id de la pieza'),
             precioFinal: z.string().optional().describe('Precio final de venta si fue distinto al publicado'),
           }),
           execute: async ({ id, precioFinal }) => {
-            const actual = buscarProductoPorId(id);
-            if (!actual) return { error: `No existe la pieza con id ${id}` };
-            runSql(
-              "UPDATE productos SET estado = 'vendido', vendido_en = CURRENT_TIMESTAMP, precio = COALESCE(?, precio) WHERE id = ?",
-              [precioFinal ?? null, id]
-            );
-            return { ok: true, titulo: actual.titulo };
+            const resultado = registrarVenta(id, precioFinal ?? null);
+            if (!resultado) return { error: `No existe la pieza con id ${id}` };
+            return {
+              ok: true,
+              titulo: resultado.producto.titulo,
+              stockRestante: resultado.stockRestante,
+              agotada: resultado.estado === 'vendido',
+            };
           },
         }),
 
         reporteVentas: tool({
-          description: 'Reporte de piezas vendidas: cuántas se vendieron, el total en pesos y la lista de piezas.',
+          description: 'Reporte de ventas: cuántas unidades se vendieron, el total en pesos y la lista de piezas vendidas.',
           inputSchema: z.object({
             periodo: z.enum(['hoy', 'semana', 'mes', 'todo'])
               .describe('hoy, semana = últimos 7 días, mes = mes calendario actual, todo = histórico'),
@@ -138,10 +140,10 @@ Reglas:
               todo: '',
             }[periodo];
             const filas = queryAll(
-              `SELECT titulo, precio, vendido_en FROM productos
-               WHERE estado = 'vendido' ${filtro} ORDER BY vendido_en DESC`
+              `SELECT titulo, precio, vendido_en FROM ventas
+               WHERE 1=1 ${filtro} ORDER BY vendido_en DESC`
             );
-            const total = filas.reduce((suma, p) => suma + (Number(p.precio) || 0), 0);
+            const total = filas.reduce((suma, v) => suma + (Number(v.precio) || 0), 0);
             return { periodo, cantidad: filas.length, total, vendidas: filas };
           },
         }),

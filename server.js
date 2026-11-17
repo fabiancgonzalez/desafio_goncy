@@ -110,7 +110,7 @@ const express = require('express');
 const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
-const { initDB, queryAll, runSql } = require('./database');
+const { initDB, queryAll, runSql, registrarVenta } = require('./database');
 const { obtenerToken, requiereAuth } = require('./auth');
 const asistente = require('./asistente');
 const { UPLOADS_DIR, DATA_DIR } = require('./paths');
@@ -259,13 +259,11 @@ app.delete('/api/productos/:id', requiereAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// Marcar como vendido (registra la fecha para los reportes)
+// Registrar la venta de UNA unidad: descuenta stock; al llegar a 0 la pieza queda "vendida"
 app.put('/api/productos/:id/vendido', requiereAuth, (req, res) => {
-  runSql(
-    "UPDATE productos SET estado = 'vendido', vendido_en = CURRENT_TIMESTAMP, precio = COALESCE(?, precio) WHERE id = ?",
-    [req.body.precioFinal ?? null, req.params.id]
-  );
-  res.json({ ok: true });
+  const resultado = registrarVenta(req.params.id, req.body.precioFinal ?? null);
+  if (!resultado) return res.status(404).json({ error: 'No existe esa pieza' });
+  res.json({ ok: true, ...resultado });
 });
 
 // ============ ASISTENTE IA (Vercel AI SDK + AI Gateway) ============
