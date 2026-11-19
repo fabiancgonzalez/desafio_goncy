@@ -1,6 +1,6 @@
 /* ===== Tokens de diseño ===== */
 :root {
-  --crema: #faf6ee;
+  --crema: #d5c0b4;
   --crema-profunda: #f1e9db;
   --superficie: #fffdf8;
   --tinta: #2d2a23;
@@ -33,7 +33,7 @@ body {
   line-height: 1.6;
   color: var(--tinta);
   background:
-    radial-gradient(55rem 28rem at 108% -8%, rgb(196 103 63 / .10), transparent 60%),
+    radial-gradient(55rem 28rem at 108% -8%, rgba(228, 117, 69, 0.1), transparent 60%),
     radial-gradient(45rem 24rem at -12% 6%, rgb(61 90 64 / .10), transparent 55%),
     var(--crema);
   min-height: 100dvh;
@@ -110,14 +110,20 @@ button { font: inherit; }
 
 .tarjeta {
   background: var(--superficie);
-  border: 1px solid rgb(230 220 201 / .8);
+  /* border: 1px solid rgb(230 220 201 / .8); */
   border-radius: var(--radio);
-  overflow: hidden;
+ overflow: hidden;
   box-shadow: var(--sombra-suave);
   display: flex;
   flex-direction: column;
   animation: aparecer .5s ease both;
   transition: translate .25s ease, box-shadow .25s ease;
+
+   background-color: #ffffff;
+  /* Arriba-izq | Arriba-der | Abajo-der | Abajo-izq */
+  border-radius: 999px 999px 16px 16px;
+ /* overflow: hidden; /* Clave para que la foto también tome la forma de arco */
+ /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); */
 }
 
 .grilla .tarjeta:nth-child(2) { animation-delay: .06s; }
@@ -132,11 +138,17 @@ button { font: inherit; }
 }
 
 .tarjeta img {
-  width: 100%;
+  width: 100dvw;
   aspect-ratio: 4 / 3;
   object-fit: cover;
   background: var(--crema-profunda);
   transition: scale .4s ease;
+
+    
+  height: 360px; /* Ajusta la altura según el tamaño de tu tarjeta */
+
+ 
+  display: block;
 }
 
 .tarjeta:hover img { scale: 1.05; }
@@ -695,6 +707,68 @@ button { font: inherit; }
   body { background: #fff; }
   .qr-caja { box-shadow: none; }
 }
+
+
+/* Contenedor del menú dentro del encabezado */
+.menu-navegacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+/* Estilo base de los botones */
+.boton-menu {
+  display: inline-block;
+  background-color: #8c5a3c; /* Tono terracota / cerámica */
+  color: #ffffff;
+  text-decoration: none;
+  font-family: inherit;
+  font-size: 1.15rem; /* Letra grande para fácil lectura */
+  font-weight: 600;
+  padding: 0.75rem 1.5rem; /* Buen tamaño táctil */
+  border-radius: 8px;
+  border: 2px solid transparent;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  cursor: pointer;
+}
+
+/* Efecto al pasar el mouse por encima */
+.boton-menu:hover {
+  background-color: #6e452c;
+}
+
+/* Efecto al hacer clic o tocar */
+.boton-menu:active {
+  transform: scale(0.98);
+}
+
+/* Estilo para resaltar la página actual (opcional) */
+.boton-menu.activo {
+  background-color: #4a3525;
+  border-color: #d5c7b8;
+}
+
+
+
+.card {
+  background-color: #ffffff;
+  /* Arriba-izq | Arriba-der | Abajo-der | Abajo-izq */
+  border-radius: 999px 999px 16px 16px;
+  overflow: hidden; /* Clave para que la foto también tome la forma de arco */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card img {
+  width: 100%;
+  height: 260px; /* Ajusta la altura según el tamaño de tu tarjeta */
+  object-fit: cover;
+  display: block;
+}
+
+
 /* Visor de imagen */
 .tarjeta img { cursor: zoom-in; }
 .visor { position: fixed; inset: 0; background: rgba(0,0,0,.85); display: flex; align-items: center; justify-content: center; z-index: 100; cursor: zoom-out; }
