@@ -117,10 +117,11 @@ const { UPLOADS_DIR, DATA_DIR } = require('./paths');
 const QRCode = require('qrcode');
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static('public'));
+app.get('/health', (req, res) => res.json({ ok: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Configuración de subida de fotos (en memoria, para comprimir con sharp)
@@ -320,11 +321,15 @@ app.post('/api/asistente/comando', requiereAuth, middlewareAsistente, async (req
 // Inicializamos la base de datos ANTES de levantar el servidor
 initDB()
   .then(() => {
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
       console.log(`🫖 Taller de la tía tia de Goncy corriendo en http://localhost:${PORT}`);
       console.log(`   Web pública: http://localhost:${PORT}`);
       console.log(`   Panel de tia de Goncy: http://localhost:${PORT}/admin.html`);
       console.log(`   Datos persistentes en: ${DATA_DIR}`);
+    });
+    server.on('error', (err) => {
+      console.error(`No se pudo abrir el puerto ${PORT}:`, err);
+      process.exit(1);
     });
   })
   .catch((err) => {
